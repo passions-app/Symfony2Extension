@@ -5,3 +5,5 @@ vendor
 testapp/app/cache
 testapp/app/logs
 .htaccess
+var/cache
+var/logs

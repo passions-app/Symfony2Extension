@@ -2,6 +2,7 @@
 
 use Behat\Behat\Context\SnippetAcceptingContext;
 use Behat\Gherkin\Node\PyStringNode;
+use PHPUnit\Framework\Assert;
 use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Process\Process;
 
@@ -28,10 +29,10 @@ class FeatureContext implements SnippetAcceptingContext
     {
         $phpFinder = new PhpExecutableFinder();
         if (false === $php = $phpFinder->find()) {
-            throw new \RuntimeException('Unable to find the PHP executable.');
+            throw new RuntimeException('Unable to find the PHP executable.');
         }
         $this->phpBin = $php;
-        $this->process = new Process(null);
+        $this->process = new Process([]);
     }
 
     /**
@@ -39,22 +40,21 @@ class FeatureContext implements SnippetAcceptingContext
      *
      * @When /^I run "behat(?: ((?:\"|[^"])*))?"$/
      *
-     * @param   string $argumentsString
+     * @param string $argumentsString
      */
     public function iRunBehat($argumentsString = '')
     {
-        $argumentsString = strtr($argumentsString, array('\'' => '"'));
+        $argumentsString = strtr($argumentsString, ['\'' => '"']);
 
-        $this->process->setWorkingDirectory(__DIR__ . '/../../testapp');
-        $this->process->setCommandLine(
-            sprintf(
-                '%s %s %s %s',
-                $this->phpBin,
-                escapeshellarg(BEHAT_BIN_PATH),
-                $argumentsString,
-                strtr('--format-settings=\'{"timer": false}\'', array('\'' => '"', '"' => '\"'))
-            )
+        $command = sprintf(
+            '%s %s %s %s',
+            $this->phpBin,
+            escapeshellarg(BEHAT_BIN_PATH),
+            $argumentsString,
+            strtr('--format-settings=\'{"timer": false}\'', ['\'' => '"', '"' => '\"'])
         );
+
+        $this->process = new Process([$command], __DIR__ . '/../../testapp');
         $this->process->start();
         $this->process->wait();
     }
@@ -64,8 +64,8 @@ class FeatureContext implements SnippetAcceptingContext
      *
      * @Then /^it should (fail|pass) with:$/
      *
-     * @param   string       $success "fail" or "pass"
-     * @param   PyStringNode $text    PyString text instance
+     * @param string       $success "fail" or "pass"
+     * @param PyStringNode $text    PyString text instance
      */
     public function itShouldPassWith($success, PyStringNode $text)
     {
@@ -78,33 +78,39 @@ class FeatureContext implements SnippetAcceptingContext
      *
      * @Then the output should contain:
      *
-     * @param   PyStringNode $text PyString text instance
+     * @param PyStringNode $text PyString text instance
      */
     public function theOutputShouldContain(PyStringNode $text)
     {
-        PHPUnit_Framework_Assert::assertContains($this->getExpectedOutput($text), $this->getOutput());
+        Assert::assertContains($this->getExpectedOutput($text), $this->getOutput());
     }
 
     private function getExpectedOutput(PyStringNode $expectedText)
     {
-        $text = strtr($expectedText, array('\'\'\'' => '"""'));
+        $text = strtr($expectedText, ['\'\'\'' => '"""']);
 
         // windows path fix
         if ('/' !== DIRECTORY_SEPARATOR) {
             $text = preg_replace_callback(
-                '/ features\/[^\n ]+/', function ($matches) {
+                '/ features\/[^\n ]+/',
+                function ($matches) {
                     return str_replace('/', DIRECTORY_SEPARATOR, $matches[0]);
-                }, $text
+                },
+                $text
             );
             $text = preg_replace_callback(
-                '/\<span class\="path"\>features\/[^\<]+/', function ($matches) {
+                '/\<span class\="path"\>features\/[^\<]+/',
+                function ($matches) {
                     return str_replace('/', DIRECTORY_SEPARATOR, $matches[0]);
-                }, $text
+                },
+                $text
             );
             $text = preg_replace_callback(
-                '/\+[fd] [^ ]+/', function ($matches) {
+                '/\+[fd] [^ ]+/',
+                function ($matches) {
                     return str_replace('/', DIRECTORY_SEPARATOR, $matches[0]);
-                }, $text
+                },
+                $text
             );
         }
 
@@ -116,7 +122,7 @@ class FeatureContext implements SnippetAcceptingContext
      *
      * @Then /^it should (fail|pass)$/
      *
-     * @param   string $success "fail" or "pass"
+     * @param string $success "fail" or "pass"
      */
     public function itShouldFail($success)
     {
@@ -125,13 +131,13 @@ class FeatureContext implements SnippetAcceptingContext
                 echo 'Actual output:' . PHP_EOL . PHP_EOL . $this->getOutput();
             }
 
-            PHPUnit_Framework_Assert::assertNotEquals(0, $this->getExitCode());
+            Assert::assertNotEquals(0, $this->getExitCode());
         } else {
             if (0 !== $this->getExitCode()) {
                 echo 'Actual output:' . PHP_EOL . PHP_EOL . $this->getOutput();
             }
 
-            PHPUnit_Framework_Assert::assertEquals(0, $this->getExitCode());
+            Assert::assertEquals(0, $this->getExitCode());
         }
     }
 

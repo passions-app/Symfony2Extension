@@ -17,16 +17,18 @@
     ],
 
     "require": {
-        "php":                       ">=7.1",
+        "php":                       ">=7.2",
         "behat/behat":               "^3.6.0",
         "symfony/framework-bundle":  "~4.0|~5.0"
     },
 
     "require-dev": {
         "symfony/symfony":                         "~4.0|~5.0",
-        "friends-of-behat/mink-browserkit-driver": "^1.4.0",
         "phpspec/phpspec":                         "~4.0|~6.0",
-        "phpunit/phpunit":                         "~6.0|~7.0|~8.0"
+        "phpunit/phpunit":                         "~6.0|~7.0|~8.0",
+        "friends-of-behat/mink": "^1.8",
+        "friends-of-behat/mink-extension": "^2.4",
+        "friends-of-behat/mink-browserkit-driver": "^1.4"
     },
 
     "autoload": {
